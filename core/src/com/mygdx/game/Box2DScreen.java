@@ -25,8 +25,8 @@ public class Box2DScreen extends BaseScreen {
     private World world;
     private Box2DDebugRenderer renderer;
     private OrthographicCamera camera; //cámara 2d;
-    private Body objeto01Body, sueloBody;  // entedad de nuestro mundo, posición, velocidad, no tiene forma
-    private Fixture objeto01Fixture, sueloFixture; // forma del body
+    private Body objeto01Body, sueloBody, pinchoBody;  // entedad de nuestro mundo, posición, velocidad, no tiene forma
+    private Fixture objeto01Fixture, sueloFixture, pinchoFixture; // forma del body
 
 
 
@@ -43,12 +43,17 @@ public class Box2DScreen extends BaseScreen {
 
         //You generally will not use this in a released version of your game, but for testing purposes we will set it up now like so:
         renderer=new Box2DDebugRenderer();
-        camera=new OrthographicCamera(32,18);
+        camera=new OrthographicCamera(7.11f,4);
+        camera.translate(0,1); // mueve la cámara 1 metro hacia arriba
         BodyDef objeto01Def=createObjeto01Def();
         objeto01Body=world.createBody(objeto01Def);
         sueloBody=world.createBody(createSueloDef());
+        pinchoBody=world.createBody(createPinchoDef(0.5f));
+        PolygonShape pinchoShape=new PolygonShape();
+        pinchoFixture=pinchoBody.createFixture(pinchoShape,1);
+        pinchoShape.dispose();
 
-        PolygonShape objeto01Shape=new PolygonShape();
+;        PolygonShape objeto01Shape=new PolygonShape();
         objeto01Shape.setAsBox(0.5f,0.5f); // en metros
         objeto01Fixture=objeto01Body.createFixture(objeto01Shape,1); //1= densidad
         objeto01Shape.dispose(); // no lo necesitamos
@@ -58,8 +63,30 @@ public class Box2DScreen extends BaseScreen {
         sueloShape.dispose();
 
 
+        pinchoFixture=createPinchoFixture(pinchoBody);
 
 
+
+
+    }
+
+    private Fixture createPinchoFixture(Body pinchoBody){
+        Vector2[] vertices= new Vector2[3]; //Creamos las coordenadas del triángulo en sentido contrario reloj.
+        vertices[0]=new Vector2(-0.5f, -0.5f);
+        vertices[1]=new Vector2(0.5f, -0.5f);
+        vertices[2]=new Vector2(0, 0.5f);
+        PolygonShape shape=new PolygonShape();
+        shape.set(vertices);
+        Fixture fix=pinchoBody.createFixture(shape,1);
+        shape.dispose();
+        return fix;
+    }
+
+    private BodyDef createPinchoDef(float x) {
+        BodyDef defCuerpo=new BodyDef();
+        defCuerpo.position.set(x,0.5f);
+        defCuerpo.type= BodyDef.BodyType.StaticBody; // por defecto todos son estáticos.
+        return defCuerpo;
     }
 
     private BodyDef createSueloDef() {
@@ -80,7 +107,9 @@ public class Box2DScreen extends BaseScreen {
     @Override
     public void dispose() {
         objeto01Body.destroyFixture(objeto01Fixture);
+        pinchoBody.destroyFixture(pinchoFixture);
         world.destroyBody(objeto01Body);
+        world.destroyBody(pinchoBody);
         world.dispose();
         renderer.dispose();
 
